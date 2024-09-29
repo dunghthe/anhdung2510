@@ -1,9 +1,5 @@
 package Controller;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 import Dal.AccountDao;
 import Model.User;
 import jakarta.mail.Authenticator;
@@ -39,6 +35,8 @@ import java.util.regex.Pattern;
  * @author admin
  */
 public class RegisterServlet extends HttpServlet {
+    
+    private final Random random = new Random(); 
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -159,8 +157,7 @@ public class RegisterServlet extends HttpServlet {
     }
 
     private String generateCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
+        int code = 100000 + random.nextInt(900000); // Use the class-level Random instance
         return String.valueOf(code);
     }
 
