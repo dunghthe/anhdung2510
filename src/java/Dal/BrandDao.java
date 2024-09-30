@@ -15,10 +15,10 @@ public class BrandDao extends DBContext {
 
     public List<Brand> getAllBrand() {
         List<Brand> list = new ArrayList<>();
-        try {
-            String sql = "SELECT * FROM Brand";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet rs = statement.executeQuery();
+        String sql = "SELECT * FROM Brand";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+
             while (rs.next()) {
                 Brand a = new Brand();
                 a.setId(rs.getInt(1));
@@ -33,15 +33,15 @@ public class BrandDao extends DBContext {
 
     public Brand getBrandById(int id) {
         Brand brand = null;
-        try {
-            String sql = "Select * from Brand WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
+        String sql = "Select * from Brand WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
-            ResultSet rs = statement.executeQuery();
-            if (rs.next()) {
-                brand = new Brand();
-                brand.setId(rs.getInt("id"));
-                brand.setName(rs.getString("name"));
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    brand = new Brand();
+                    brand.setId(rs.getInt("id"));
+                    brand.setName(rs.getString("name"));
+                }
             }
         } catch (SQLException e) {
             System.out.println(e);
@@ -50,10 +50,7 @@ public class BrandDao extends DBContext {
     }
 
     public void insertBrand(String name) {
-        String query = "INSERT INTO [dbo].[Brand]\n"
-                + "           ([name])\n"
-                + "     VALUES (?)";
-
+        String query = "INSERT INTO [dbo].[Brand] ([name]) VALUES (?)";
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, name);
             ps.executeUpdate();
@@ -64,16 +61,11 @@ public class BrandDao extends DBContext {
     }
 
     public void UpdateBrand(int id, String name) {
-        String sql = "UPDATE [dbo].[Brand]\n"
-                + "   SET [name] = ?\n"
-                + " WHERE id = ?";
-
-        try {
-            PreparedStatement st = connection.prepareStatement(sql);
+        String sql = "UPDATE [dbo].[Brand] SET [name] = ? WHERE id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, name);
             st.setInt(2, id);
             st.executeUpdate();
-
         } catch (SQLException e) {
             System.out.println(e);
         }
@@ -84,39 +76,36 @@ public class BrandDao extends DBContext {
         String deleteSql = "DELETE FROM [dbo].[Brand] WHERE id = ?";
         String message = "";
 
-        try {
-            // Check for associated products
-            PreparedStatement checkSt = connection.prepareStatement(checkSql);
+        try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
             checkSt.setInt(1, bid);
-ResultSet rs = checkSt.executeQuery();
-
-            if (rs.next()) {
-                int productCount = rs.getInt(1);
-                if (productCount > 0) {
-                    message = "Không thể xóa thương hiệu này. Có các sản phẩm  "+ productCount +" được liên kết với thương hiệu này. Vui lòng xóa hoặc chỉ định lại các sản phẩm này trước khi xóa nhãn hiệu.";
-                    return message;
+            try (ResultSet rs = checkSt.executeQuery()) {
+                if (rs.next()) {
+                    int productCount = rs.getInt(1);
+                    if (productCount > 0) {
+                        message = "Không thể xóa thương hiệu này. Có các sản phẩm " + productCount + " được liên kết với thương hiệu này. Vui lòng xóa hoặc chỉ định lại các sản phẩm này trước khi xóa nhãn hiệu.";
+                        return message;
+                    }
                 }
             }
 
-            // Proceed with deleting the brand
-            PreparedStatement deleteSt = connection.prepareStatement(deleteSql);
-            deleteSt.setInt(1, bid);
-            deleteSt.executeUpdate();
-            message = "Xóa Nhãn Hàng Thành Công.";
-
+            try (PreparedStatement deleteSt = connection.prepareStatement(deleteSql)) {
+                deleteSt.setInt(1, bid);
+                deleteSt.executeUpdate();
+                message = "Xóa Nhãn Hàng Thành Công.";
+            }
         } catch (SQLException e) {
             message = "SQL Error: " + e.getMessage();
         }
         return message;
     }
+
     public List<Brand> getBrandCounts() throws Exception {
         List<Brand> list = new ArrayList<>();
-        String sql = "SELECT b.id, b.name, COUNT(p.id) AS count \n"
-                + "                 FROM Brand b \n"
-                + "                 LEFT JOIN Product p ON b.id = p.id\n"
-                + "                 GROUP BY b.id, b.name";
-
-        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
+        String sql = "SELECT b.id, b.name, COUNT(p.id) AS count " +
+                     "FROM Brand b LEFT JOIN Product p ON b.id = p.bid " +
+                     "GROUP BY b.id, b.name";
+        try (PreparedStatement st = connection.prepareStatement(sql);
+             ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
                 Brand a = new Brand();
                 a.setId(rs.getInt(1));
@@ -127,26 +116,26 @@ ResultSet rs = checkSt.executeQuery();
         } catch (Exception e) {
             throw new Exception("Error retrieving category counts", e);
         }
-
         return list;
     }
-public int getTotalBrand(){
-    int count = 0;
-    String sql = "SELECT COUNT(*) FROM Brand";
-    try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-            count = rs.getInt(1);
+
+    public int getTotalBrand() {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM Brand";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.out.println("SQL Error: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.out.println("SQL Error: " + e.getMessage());
+        return count;
     }
-    return count;
-}
+
     public static void main(String[] args) {
         BrandDao bd = new BrandDao();
         int total = bd.getTotalBrand();
         System.out.println(total);
-
     }
-    
 }
