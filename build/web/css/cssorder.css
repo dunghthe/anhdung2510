@@ -28,7 +28,7 @@ div.text-uppercase{
 .btn#sub:hover{
     background-color: #333;
     color: #FFF;
-    border: 1ps solid #333;
+    border: 1px solid #333;
 }
 .fa-cog{
     color: #a8a8a8;
@@ -158,8 +158,8 @@ div.new{
     text-align: left;
 }
 .table tbody tr{
-    padding-top: 10px;
     padding: 10px 20px;
+    padding-top: 10px;
     border-bottom: 1px solid #ccc;
     transition: all .4s ease-in-out;
 }

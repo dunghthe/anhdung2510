@@ -6427,7 +6427,7 @@
 	 */
 	DataTable.Api = _Api = function ( context, data )
 	{
-		if ( ! this instanceof _Api ) {
+		if ( !(this instanceof _Api) ) {
 			throw 'DT API must be constructed as a new object';
 			// or should it do the 'new' for the caller?
 			// return new _Api.apply( this, arguments );
