@@ -38,7 +38,7 @@ public class Student {
         System.out.print("Please enter your age:");
         age= sc.nextInt();
     }
-    public static void main(String args[]){
+    public static void main(String[] args){
        
         Student s2 = new Student();
         

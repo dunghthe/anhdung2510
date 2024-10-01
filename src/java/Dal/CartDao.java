@@ -94,7 +94,6 @@ public class CartDao extends DBContext {
             if (rs.next()) {
                 // Product already exists in the cart, update quantity and price
                 int currentQuantity = rs.getInt("quantity");
-                long currentPrice = rs.getLong("price");
                 int updatedQuantity = currentQuantity + quantity;
 
                 // Check stock for the product variant
