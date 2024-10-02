@@ -75,10 +75,6 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        String code = request.getParameter("code");
-        GoogleLogin gg = new GoogleLogin();
-        String accessToken = gg.getToken(code);
-        GoogleAccount acc = gg.getUserInfo(accessToken);
         AccountDao ad = new AccountDao();
 
       
