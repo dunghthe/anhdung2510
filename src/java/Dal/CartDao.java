@@ -108,11 +108,12 @@ public class CartDao extends DBContext {
                 // Update existing item quantity and price
                 PreparedStatement updateSt = connection.prepareStatement(updateQuantityAndPriceSql);
                 updateSt.setInt(1, quantity);
-                updateSt.setLong(2, product.getPrice() * quantity);
+                updateSt.setLong(2, product.getPrice() * (long) quantity);
                 updateSt.setInt(3, user.getId());
                 updateSt.setInt(4, product.getId());
                 updateSt.setInt(5, variantId);
                 updateSt.executeUpdate();
+
             } else {
                 // Product does not exist in the cart, insert new product
                 int stock = checkProductStock(product.getId(), variantId);
