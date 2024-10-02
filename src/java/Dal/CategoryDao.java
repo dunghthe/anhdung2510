@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Dal;
 
 import Model.Category;
@@ -10,111 +6,148 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
- * @author TRONG TAI
+ * Data Access Object (DAO) for Category.
+ * Handles database interactions for Category related operations.
  */
 public class CategoryDao extends DBContext {
 
+    // Logger để ghi log thông tin, cảnh báo và lỗi
+    private static final Logger logger = Logger.getLogger(CategoryDao.class.getName());
+
+    /**
+     * Truy xuất tất cả danh mục từ cơ sở dữ liệu.
+     * @return Danh sách các đối tượng Category.
+     */
     public List<Category> getAllCategory() {
         List<Category> list = new ArrayList<>();
+        String sql = "SELECT * FROM Category";
 
-        try {
-            String sql = "SELECT * FROM Category";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet rs = statement.executeQuery();
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+
             while (rs.next()) {
-                Category a = new Category();
-                a.setId(rs.getInt(1));
-                a.setName(rs.getString(2));
-                list.add(a);
+                Category category = new Category();
+                category.setId(rs.getInt(1));
+                category.setName(rs.getString(2));
+                list.add(category);
             }
-        } catch (Exception e) {
-            System.out.println(e);
+            logger.info("Fetched all categories successfully.");
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL Error while fetching all categories", e);
         }
-        return list;
 
+        return list;
     }
 
+    /**
+     * Truy xuất danh mục theo ID từ cơ sở dữ liệu.
+     * @param id ID của danh mục.
+     * @return Đối tượng Category hoặc null nếu không tìm thấy.
+     */
     public Category getCategoryById(int id) {
         Category category = null;
-        try {
-            String sql = "Select * from Category WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
+        String sql = "SELECT * FROM Category WHERE id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
-            ResultSet rs = statement.executeQuery();
-            if (rs.next()) {
-                category = new Category();
-                category.setId(rs.getInt("id"));
-                category.setName(rs.getString("name"));
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    category = new Category();
+                    category.setId(rs.getInt("id"));
+                    category.setName(rs.getString("name"));
+                }
             }
-        } catch (Exception e) {
-            System.out.println(e);
+            logger.info("Fetched category with ID: " + id);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL Error while fetching category by ID", e);
         }
+
         return category;
     }
 
+    /**
+     * Thêm một danh mục mới vào cơ sở dữ liệu.
+     * @param name Tên của danh mục mới.
+     */
     public void insertCategory(String name) {
-        String query = "INSERT INTO [dbo].[Category]\n"
-                + "           ([name])\n"
-                + "     VALUES (?)";
+        String query = "INSERT INTO [dbo].[Category] ([name]) VALUES (?)";
 
         try (PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, name);
+            ps.setString(1, name);  
             ps.executeUpdate();
-            System.out.println("Category inserted successfully.");
+            // Thay System.out.println bằng Logger
+            logger.info("Category inserted successfully with name: " + name);
         } catch (SQLException e) {
-            System.out.println("SQL Error: " + e.getMessage());
+            // Thay System.out.println bằng Logger để log lỗi
+            logger.log(Level.SEVERE, "SQL Error while inserting category: {0}", e.getMessage());
         }
     }
 
-    public void UpdateCategory(int cid, String name) {
-        String sql = "UPDATE [dbo].[Category]\n"
-                + "   SET [name] = ?\n"
-                + " WHERE id = ?";
+    /**
+     * Cập nhật tên của một danh mục hiện có.
+     * @param cid ID của danh mục cần cập nhật.
+     * @param name Tên mới của danh mục.
+     */
+    public void updateCategory(int cid, String name) {
+        String sql = "UPDATE [dbo].[Category] SET [name] = ? WHERE id = ?";
 
-        try {
-            PreparedStatement st = connection.prepareStatement(sql);
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, name);
             st.setInt(2, cid);
             st.executeUpdate();
-
+            logger.info("Updated category ID " + cid + " with new name: " + name);
         } catch (SQLException e) {
-            System.out.println(e);
+            logger.log(Level.SEVERE, "SQL Error while updating category", e);
         }
     }
 
+    /**
+     * Xóa một danh mục sau khi kiểm tra xem có sản phẩm nào liên kết với danh mục đó không.
+     * @param cid ID của danh mục cần xóa.
+     * @return Thông báo về kết quả xóa.
+     */
     public String deleteCategory(int cid) {
         String checkSql = "SELECT COUNT(*) FROM [dbo].[Product] WHERE cid = ?";
         String deleteSql = "DELETE FROM [dbo].[Category] WHERE id = ?";
         String message = "";
 
-        try {
-            // Check for associated products
-PreparedStatement checkSt = connection.prepareStatement(checkSql);
+        try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
             checkSt.setInt(1, cid);
-            ResultSet rs = checkSt.executeQuery();
-
-            if (rs.next()) {
-                int productCount = rs.getInt(1);
-                if (productCount > 0) {
-                    message = "Không thể xóa danh mục này. Có " + productCount + " sản phẩm được liên kết với danh mục này. Vui lòng xóa hoặc chỉ định lại các sản phẩm này trước khi xóa danh mục.";
-                    return message;
+            try (ResultSet rs = checkSt.executeQuery()) {
+                if (rs.next()) {
+                    int productCount = rs.getInt(1);
+                    if (productCount > 0) {
+                        message = "Không thể xóa danh mục này. Có " + productCount +
+                                  " sản phẩm được liên kết với danh mục này. Vui lòng xóa hoặc chỉ định lại các sản phẩm trước khi xóa danh mục.";
+                        return message;
+                    }
                 }
             }
 
-            // Proceed with deleting the category
-            PreparedStatement deleteSt = connection.prepareStatement(deleteSql);
-            deleteSt.setInt(1, cid);
-            deleteSt.executeUpdate();
-            message = "Xóa danh mục thành công.";
-
+            // Tiến hành xóa danh mục nếu không có sản phẩm liên kết
+            try (PreparedStatement deleteSt = connection.prepareStatement(deleteSql)) {
+                deleteSt.setInt(1, cid);
+                deleteSt.executeUpdate();
+                message = "Xóa danh mục thành công.";
+                logger.info("Deleted category ID: " + cid);
+            }
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL Error while deleting category", e);
             message = "SQL Error: " + e.getMessage();
         }
+
         return message;
     }
+
+    /**
+     * Lấy số lượng danh mục cùng với số lượng sản phẩm trong mỗi danh mục.
+     * @return Danh sách các đối tượng Category với số lượng sản phẩm.
+     * @throws Exception nếu có lỗi xảy ra trong cơ sở dữ liệu.
+     */
     public List<Category> getCategoryCounts() throws Exception {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT c.id, c.name, COUNT(p.id) AS count " +
@@ -129,28 +162,42 @@ PreparedStatement checkSt = connection.prepareStatement(checkSql);
                 int count = rs.getInt("count");
                 list.add(new Category(id, name, count));
             }
+            logger.info("Fetched category counts successfully.");
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error retrieving category counts", e);
             throw new Exception("Error retrieving category counts", e);
         }
 
         return list;
     }
-public int getTotalCategory(){
-    int count = 0;
-    String sql = "SELECT COUNT(*) FROM Category";
-    try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-            count = rs.getInt(1);
-        }
-    } catch (SQLException e) {
-        System.out.println("SQL Error: " + e.getMessage());
-    }
-    return count;
-}
-    public static void main(String[] args) {
 
+    /**
+     * Lấy tổng số lượng danh mục hiện có trong cơ sở dữ liệu.
+     * @return Tổng số danh mục.
+     */
+    public int getTotalCategory() {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM Category";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+            logger.info("Fetched total category count: " + count);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL Error while getting total categories", e);
+        }
+
+        return count;
+    }
+
+    /**
+     * Phương thức main để kiểm tra và thử nghiệm các phương thức.
+     */
+    public static void main(String[] args) {
         CategoryDao cd = new CategoryDao();
-         int total = cd.getTotalCategory();
-        System.out.println(total);
+        int total = cd.getTotalCategory();
+        logger.info("Total categories: " + total);
     }
 }
