@@ -305,7 +305,7 @@
                                         <input type="number" id="minPrice" name="minPrice" class="form-control" placeholder="Min" required>
                                         <input type="number" id="maxPrice" name="maxPrice" class="form-control" placeholder="Max" required>
                                     </div>
-                                    <button type="submit" id="searchButton" class="btn btn-primary">Tìm Kiếm</button>
+                                    <center><button type="submit" id="searchButton" class="btn btn-primary">Tìm Kiếm</button></center>
                                 </form>
                             </div>
                             <% if (request.getAttribute("errorMessage") != null) { %>
