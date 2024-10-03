@@ -3,7 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
 package Controller;
-
 import Dal.CartDao;
 import Dal.OrderDao;
 import Dal.PaymentDao;
@@ -38,13 +37,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-
 /**
  *
  * @author ADMIN
  */
 public class Checkout extends HttpServlet {
-
+    private static final String MESS_PAYMENT = "messpayment";
+    
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -70,7 +69,7 @@ public class Checkout extends HttpServlet {
             out.println("</html>");
         }
     }
-
+    
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -93,12 +92,12 @@ public class Checkout extends HttpServlet {
             List<Cart> list = c.getCartByUid(acc.getId());
             request.setAttribute("listcart", list);
             request.setAttribute("total", total);
-            request.setAttribute("messpayment", session.getAttribute("messpayment"));
+            request.setAttribute(MESS_PAYMENT, session.getAttribute(MESS_PAYMENT));
             request.setAttribute("messprofilecheckout", session.getAttribute("messprofilecheckout"));
             request.getRequestDispatcher("checkout.jsp").forward(request, response);
         }
     }
-
+    
     /**
      * Handles the HTTP <code>POST</code> method.
      *
@@ -112,34 +111,28 @@ public class Checkout extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         User acc = (User) session.getAttribute("acc");
-
         if (acc == null) {
             response.sendRedirect("login.jsp");
             return;
         }
-
         String paymentMethod = request.getParameter("payment");
         CartDao cartDao = new CartDao();
         ProductDao productDao = new ProductDao();
         List<Cart> cartList = cartDao.getCartByUid(acc.getId());
         long total = cartDao.calculateTotalCartPrice(acc.getId());
-
         String name = request.getParameter("fullname").trim();
         String phone = request.getParameter("phone").trim();
         String city = request.getParameter("city").trim();
         String district = request.getParameter("district").trim();
         String commune = request.getParameter("commune").trim();
         String address = request.getParameter("address").trim();
-
         // Validate required fields to ensure they are not empty or whitespace
         if (name.isEmpty() || phone.isEmpty() || city.isEmpty() || district.isEmpty() || commune.isEmpty() || address.isEmpty()) {
             session.setAttribute("messprofilecheckout", "Các trường thông tin không được để trống.");
             session.setAttribute("messprofilecheckoutTime", System.currentTimeMillis()); // Set timestamp
-
             response.sendRedirect("checkout");
             return;
         }
-
         // Save data to session
         session.setAttribute("fullname", name);
         session.setAttribute("phone", phone);
@@ -147,18 +140,14 @@ public class Checkout extends HttpServlet {
         session.setAttribute("district", district);
         session.setAttribute("commune", commune);
         session.setAttribute("address", address);
-
         LocalDateTime currentDate = LocalDateTime.now();
         OrderDao orderDao = new OrderDao();
-
         if (paymentMethod == null) {
-            session.setAttribute("messpayment", "Bạn cần phải chọn 1 trong 2 phương thức thanh toán");
+            session.setAttribute(MESS_PAYMENT, "Bạn cần phải chọn 1 trong 2 phương thức thanh toán");
             session.setAttribute("messpaymentTime", System.currentTimeMillis()); // Set timestamp
-
             response.sendRedirect("checkout");
             return;
         }
-
         if ("cod".equals(paymentMethod)) {
             // Handle cash on delivery payment
             Order order = new Order();
@@ -172,7 +161,6 @@ public class Checkout extends HttpServlet {
             order.setDate(Date.from(currentDate.atZone(ZoneId.systemDefault()).toInstant()));
             order.setTotal(total);
             order.setStatusid(orderDao.getStatusById(1));
-
             // Add order details from cart items
             List<OrderDetail> orderDetails = new ArrayList<>();
             for (Cart cart : cartList) {
@@ -191,34 +179,26 @@ public class Checkout extends HttpServlet {
                 orderDetails.add(detail);
             }
             order.setOrderDetails(orderDetails);
-
             // Perform necessary updates and actions
             for (Cart cart : cartList) {
                 productDao.updateProductQuantity(cart.getVariantId(), cart.getQuantity());
             }
             cartDao.clearCart(acc.getId());
-
             // Add the order to the database
             orderDao.addOrder(order);
-
             // Get all orders
             int oid = orderDao.findLastOrderId(acc.getId());
             Date date = Date.from(currentDate.atZone(ZoneId.systemDefault()).toInstant());
-
             PaymentDao paymentDao = new PaymentDao();
-
             // Convert java.util.Date to java.sql.Date
             java.sql.Date sqlDate = new java.sql.Date(date.getTime());
-
             paymentDao.insertPayment(oid, 1, sqlDate, (int) total);
-
             // Send confirmation email
             try {
                 sendEmail(acc.getEmail(), order, cartList);
             } catch (MessagingException | UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-
             // Redirect to home page or another appropriate page
             response.sendRedirect("home");
         } else if ("vnpay".equals(paymentMethod)) {
@@ -227,82 +207,67 @@ public class Checkout extends HttpServlet {
             request.getRequestDispatcher("vnpay_pay.jsp").forward(request, response);
         }
     }
-
+    
     public static LocalDateTime getCurrentDateTime() {
         return LocalDateTime.now();
     }
-
+    
     private void sendEmail(String to, Order order, List<Cart> cartList) throws MessagingException, UnsupportedEncodingException {
         final String username = "HoLaTechSE1803@gmail.com";
         final String password = "xgdm ytoa shxw iwdk";
-
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.mime.charset", "UTF-8");
-
         Authenticator auth = new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
             }
         };
-
         Session session = Session.getInstance(props, auth);
-
         Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(username));
+        message.setFrom(new InternetAddress(username, "HoLaTech"));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-        message.setSubject(MimeUtility.encodeText("Xác nhận đơn hàng", "UTF-8", "B"));
-
-        // Create the email content
-        StringBuilder emailContent = new StringBuilder();
-        emailContent.append("Cảm ơn bạn đã mua sắm tại HoLaTech!!!\n")
-                .append("Đây là đơn hàng chi tiết của bạn:\n\n")
-                .append("Tên người nhận: ").append(order.getName()).append("\n")
-                .append("Số điện thoại: ").append(order.getPhone()).append("\n")
-                .append("Địa chỉ: ").append(order.getDetailedAddress()).append(", ")
-                .append(order.getCommune()).append(", ")
-                .append(order.getDistrict()).append(", ")
-                .append(order.getProvince()).append("\n")
-                .append("Phương thức thanh toán: Thanh toán khi nhận hàng.\n\n");
-
-        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-
-        for (OrderDetail detail : order.getOrderDetails()) {
-            String productColor = "";
-            for (Cart cart : cartList) {
-                if (cart.getPid() == detail.getPid().getId() && cart.getVariantId() == detail.getVariantId().getId()) {
-                    productColor = cart.getColorName();
-                    break;
-                }
+        message.setSubject(MimeUtility.encodeText("Order Confirmation", "UTF-8", "B"));
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        StringBuilder content = new StringBuilder();
+        content.append("<html><body>");
+        content.append("<h1>Order Confirmation</h1>");
+        content.append("<p>Thank you for your order. Here are the details:</p>");
+        content.append("<table>");
+        content.append("<tr><th>Product</th><th>Variant</th><th>Quantity</th><th>Price</th><th>Total</th></tr>");
+        for (Cart cart : cartList) {
+            ProductVariant variant = cart.getProductVariant();
+            if (variant != null) {
+                content.append("<tr>")
+                    .append("<td>").append(cart.getName()).append("</td>")
+                    .append("<td>").append(variant.getName()).append("</td>")
+                    .append("<td>").append(cart.getQuantity()).append("</td>")
+                    .append("<td>").append(nf.format(cart.getPrice())).append("</td>")
+                    .append("<td>").append(nf.format(cart.getTotalOneProduct())).append("</td>")
+                    .append("</tr>");
+            } else {
+                content.append("<tr>")
+                    .append("<td>").append(cart.getName()).append("</td>")
+                    .append("<td>").append("N/A").append("</td>")
+                    .append("<td>").append(cart.getQuantity()).append("</td>")
+                    .append("<td>").append(nf.format(cart.getPrice())).append("</td>")
+                    .append("<td>").append(nf.format(cart.getTotalOneProduct())).append("</td>")
+                    .append("</tr>");
             }
-            emailContent.append("Tên sản phẩm: ").append(detail.getPid().getName())
-                    .append("\nMàu sắc: ").append(productColor)
-                    .append("\nSố lượng: ").append(detail.getQuantity())
-                    .append("\nGiá: ").append(currencyFormatter.format(detail.getPrice()))
-                    .append("\nTổng tiền của sản phẩm: ").append(currencyFormatter.format(detail.getTotal()))
-                    .append("\n\n");
         }
-        emailContent.append("Tổng tiền đơn hàng: ").append(currencyFormatter.format(order.getTotal())).append("\n\n");
-        emailContent.append("Bạn sẽ sớm nhận được đơn hàng của mình.\n")
-                .append("Chúng tôi mong rằng bạn sẽ có những trải nghiệm tuyệt vời khi mua sắm tại HoLaTech!!!!");
-
-        message.setContent(emailContent.toString(), "text/plain; charset=UTF-8");
-
+        content.append("</table>");
+        content.append("<p>Total: ").append(nf.format(order.getTotal())).append("</p>");
+        content.append("</body></html>");
+        message.setContent(content.toString(), "text/html; charset=UTF-8");
         Transport.send(message);
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+    
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
-
+    }
 }

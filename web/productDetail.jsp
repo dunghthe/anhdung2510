@@ -313,6 +313,10 @@
                         <h3>Specifications</h3>
                         <table class="table table-bordered">
                             <tr>
+                                <th>Specification</th>
+                                <th>Details</th>
+                            </tr>
+                            <tr>
                                 <td>Chip</td>
                                 <td>${detail.chip}</td>
                             </tr>
