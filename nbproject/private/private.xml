@@ -12,13 +12,12 @@
             <file>file:/D:/Ky5-Summer2024/SWP391/SWP_391/web/vnpay_return.jsp</file>
         </group>
         <group>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Controller/LoginServlet.java</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Dal/AccountDao.java</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Dal/FeedbackDao.java</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Controller/AddBrandServlet.java</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/web/accountManagerment.jsp</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Controller/AllProductServlet.java</file>
-            <file>file:/C:/Users/TRONG%20TAI/Downloads/SWP_391/src/java/Controller/DeleteCategory.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Controller/LoginServlet.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Controller/ProfileServlet.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Dal/CartDao.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Model/Student.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Controller/AddBrandServlet.java</file>
+            <file>file:/T:/Khac/Hoc/Ky_5/SWT301/Project_SWT301/anhdung2510/src/java/Controller/AddQuantityProduct.java</file>
         </group>
     </open-files>
 </project-private>

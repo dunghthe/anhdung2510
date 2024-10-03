@@ -6,6 +6,7 @@
 package Controller;
 
 import Dal.ProductDao;
+import Model.Color;
 import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -60,7 +61,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
     int id = Integer.parseInt(request.getParameter("id"));
     Product p = pd.getProductById(id);
 
-    List color = pd.getAllColor();
+    List<Color> color = pd.getAllColor();
     request.setAttribute("color", color);
     request.setAttribute("product", p);
     String errorMessage = (String) request.getAttribute("errorMessage");
