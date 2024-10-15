@@ -92,7 +92,7 @@ public class CategoryDao extends DBContext {
 
         try {
             // Check for associated products
-PreparedStatement checkSt = connection.prepareStatement(checkSql);
+try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
             checkSt.setInt(1, cid);
             ResultSet rs = checkSt.executeQuery();
 
@@ -103,13 +103,14 @@ PreparedStatement checkSt = connection.prepareStatement(checkSql);
                     return message;
                 }
             }
+}
 
             // Proceed with deleting the category
-            PreparedStatement deleteSt = connection.prepareStatement(deleteSql);
+            try (PreparedStatement deleteSt = connection.prepareStatement(deleteSql)) {
             deleteSt.setInt(1, cid);
             deleteSt.executeUpdate();
             message = "Xóa danh mục thành công.";
-
+            }
         } catch (SQLException e) {
             message = "SQL Error: " + e.getMessage();
         }
